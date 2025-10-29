@@ -1,0 +1,16 @@
+{
+  "name": "example",
+  "version": "1.0.0",
+  "description": "example for DET project",
+  "main": "index.js",
+  "scripts": {
+    "start": "json-server db.json | five-server .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Deepankar01",
+  "license": "ISC",
+  "devDependencies": {
+    "five-server": "^0.4.4",
+    "json-server": "^1.0.0-beta.3"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "webc-component",
+  "version": "1.0.0",
+  "description": "component for pg",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "test": "npm test",
+    "build": "vite build && npm run copy-types",
+    "copy-types": "cp src/types.d.ts dist/types.d.ts",
+    "build:watch:example": "vite build --outDir example/dist --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Deepankar01/webc-component.git"
+  },
+  "author": "Deepankar01",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Deepankar01/webc-component/issues"
+  },
+  "homepage": "https://github.com/Deepankar01/webc-component#readme",
+  "devDependencies": {
+    "@types/node": "^24.9.2",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.12",
+    "vite-plugin-dts": "^4.5.4"
+  }
+}
