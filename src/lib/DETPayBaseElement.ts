@@ -13,7 +13,7 @@ export abstract class DETPayBaseElement extends HTMLElement {
   protected dataConfiguration: ClientConfiguration | undefined;
   protected debugEnabled = false;
   public nonce?: string = undefined;
-  
+
   /** Simple logger respecting debug flag */
   protected log(...args: unknown[]) {
     if (this.debugEnabled) console.debug("[DTPay]", ...args);
@@ -61,6 +61,7 @@ export abstract class DETPayBaseElement extends HTMLElement {
 
   /** read extra user supplied atributes and dump them in extraParams */
   protected readExtraDataAttributes() {
+    this.log("Reading extra data-* attributes");
     // Everything else passed as data-* → query param
     const extraParams: Record<string, URLParamValue> = {};
     for (const attr of Array.from(this.attributes)) {

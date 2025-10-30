@@ -1,7 +1,8 @@
 import { DETPayBaseElement } from "./lib/DETPayBaseElement";
+import {errorTemplate, loaderTemplate} from "./lib/templates"
 
-const template = document.createElement("template");
-template.innerHTML = `
+const iFrameTemplate = document.createElement("template");
+iFrameTemplate.innerHTML = `
   <style>
     :host { display:block; width: 100%; min-height: 200px; height:inherit; }
     .wrapper { position: relative; width: 100%; height: 100%; }
@@ -15,31 +16,11 @@ template.innerHTML = `
 export class DETPayIFrame extends DETPayBaseElement {
   private iframe!: HTMLIFrameElement;
   private teardownMessage?: () => void;
+  private shadowRootElement: ShadowRoot;
 
   constructor() {
     super();
-    const shadow = this.attachShadow({ mode: "open" });
-    shadow.appendChild(template.content.cloneNode(true));
-    this.iframe = this.shadowRoot!.querySelector("iframe")!;
-    /// Load event listener
-    this.iframe.addEventListener("load", () => {
-      console.log("Iframe content has loaded!");
-      this.emit("iframe", {
-        message: "Iframe loaded",
-        event: "det_pay:load",
-        origin: "",
-      });
-    });
-
-    this.iframe.addEventListener("error", (e) => {
-      console.log("Iframe content has error!");
-      this.emit("iframe", {
-        message: "Iframe error",
-        event: "det_pay:error",
-        data: e,
-        origin: "",
-      });
-    });
+    this.shadowRootElement = this.attachShadow({ mode: "open" });
   }
 
   /**
@@ -48,9 +29,9 @@ export class DETPayIFrame extends DETPayBaseElement {
   connectedCallback() {
     this.log("DETPayIFrame connected to the DOM");
     this.readCommonAttributes();
-    this.applyIframeAttributes();
-    this.setupMessageBridge();
     if (this.clientId && !this.dataConfiguration) {
+      // initialize loader configuration
+      this.loaderComponent();
       this.log("config_loading event emitted");
       this.emit("iframe", {
         message: "Fetching client details",
@@ -59,6 +40,11 @@ export class DETPayIFrame extends DETPayBaseElement {
       });
       this.getClientDetails()
         .then(() => {
+          // initialize iframe only after fetching configuration
+          this.initializeIFrame();
+          this.applyIframeAttributes();
+          this.prepareSrc();
+          this.setupMessageBridge();
           if (this.dataConfiguration) {
             this.log("config_success event emitted");
             this.emit("iframe", {
@@ -87,11 +73,12 @@ export class DETPayIFrame extends DETPayBaseElement {
             origin: "",
           });
         });
-
-      this.shadowRoot!.querySelector("iframe")!.src = this.prepareSrc();
     }
   }
 
+  /**
+   * Lifecycle method called when the element is removed from the DOM
+   */
   disconnectedCallback() {
     this.teardownMessage?.();
   }
@@ -115,17 +102,43 @@ export class DETPayIFrame extends DETPayBaseElement {
 
   /**
    * Lifecycle method called when an observed attribute changes
-   * @param name
-   * @param oldValue
-   * @param newValue
-   * @returns
    */
   attributeChangedCallback(name: string, oldValue: string, newValue: string) {
     // Re-apply on relevant attr changes
     if (!this.isConnected) return;
     this.readCommonAttributes();
-    this.applyIframeAttributes();
-    this.prepareSrc();
+    if (this.dataConfiguration) {
+      this.applyIframeAttributes();
+      // console.log("Attribute changed:", name, oldValue, newValue);
+      this.prepareSrc();
+    }
+  }
+
+  /**
+   * Initialize the iframe element and append it to the shadow DOM
+   */
+  private initializeIFrame() {
+    this.shadowRootElement.innerHTML = iFrameTemplate.innerHTML;
+    this.iframe = this.shadowRootElement!.querySelector("iframe")!;
+    /// Load event listener
+    this.iframe.addEventListener("load", () => {
+      console.log("Iframe content has loaded!");
+      this.emit("iframe", {
+        message: "Iframe loaded",
+        event: "det_pay:load",
+        origin: "",
+      });
+    });
+
+    this.iframe.addEventListener("error", (e) => {
+      console.log("Iframe content has error!");
+      this.emit("iframe", {
+        message: "Iframe error",
+        event: "det_pay:error",
+        data: e,
+        origin: "",
+      });
+    });
   }
 
   /**
@@ -151,27 +164,31 @@ export class DETPayIFrame extends DETPayBaseElement {
    * Prepare the src URL with query parameters
    * @returns prepared src URL
    */
-  private prepareSrc(): string {
+  private prepareSrc(): void {
+    console.log("Preparing iframe src URL");
     const baseUrl = "https://pay.det.co/iframe";
     const url = new URL(baseUrl);
     if (this.clientId) {
       url.searchParams.append("client_id", this.clientId);
     }
-
     if (this.redirectUri && this.dataConfiguration?.redirectUrls) {
-      // validate redirect URI against dataConfiguration if available
       if (this.dataConfiguration.redirectUrls.includes(this.redirectUri)) {
         url.searchParams.append("redirect_uri", this.redirectUri);
       } else {
-        return new URL("").toString(); // return empty URL if redirect URI is invalid
+        this.errorComponent("Redirect URI mismatch.");// return empty URL if redirect URI is invalid
       }
     }
     if (this.dataContext && this.dataConfiguration?.dataKey) {
       url.searchParams.append(this.dataConfiguration.dataKey, this.dataContext);
     }
-    return url.toString();
+    //adds src to iframe
+    this.iframe.src = url.toString();
   }
 
+  /**
+   * Setup message bridge to listen to messages from the iframe
+   * CHILD TO PARENT MESSAGE BRIDGE
+   */
   private setupMessageBridge() {
     const onMessage = (ev: MessageEvent) => {
       // Only accept messages from the configured allowed origins and the same window
@@ -206,6 +223,18 @@ export class DETPayIFrame extends DETPayBaseElement {
     window.addEventListener("message", onMessage);
     this.teardownMessage = () =>
       window.removeEventListener("message", onMessage);
+  }
+
+  private errorComponent(message: string) {
+    errorTemplate.querySelector(".error")!.textContent = message;
+    this.shadowRootElement.innerHTML = errorTemplate.innerHTML;
+  }
+
+  /**
+   * Initialize loader component
+   */
+  private loaderComponent() {
+    this.shadowRootElement.innerHTML = loaderTemplate.innerHTML;
   }
 }
 
