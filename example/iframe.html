@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DETPay Component</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        .wrapper {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
+    <script type="module" src="./dist/index.js"></script>
+</head>
+<body>
+    <!-- Attributes can be added to element in html attributes -->
+     <div class="wrapper">
+        <det-pay-iframe client-id="" redirect-uri="" data-context=""/>
+     </div>
+    
+    <script>
+        // or Attributes can be updated using the setAtrribute method in JavaScript
+        const detPayElement = document.querySelector('det-pay-iframe');
+        detPayElement.setAttribute('client-id', 'a964035c-a007-4c70-af5e-768857810602');
+        detPayElement.setAttribute('redirect-uri', 'https://google.com');
+        detPayElement.setAttribute('data-context', JSON.stringify({ exampleKey: 'exampleValue' })); 
+        detPayElement.addEventListener('iframe', (event) => {
+            console.log('DETPayIFrame:', event, event.event);
+        });
+       
+    </script>
+</body>
+</html>
