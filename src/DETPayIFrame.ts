@@ -14,6 +14,7 @@ iFrameTemplate.innerHTML = `
 `;
 
 export class DETPayIFrame extends DETPayBaseElement {
+  private baseUrl: string = "https://pay.det.co/iframe";
   private iframe!: HTMLIFrameElement;
   private teardownMessage?: () => void;
   private shadowRootElement: ShadowRoot;
@@ -166,8 +167,7 @@ export class DETPayIFrame extends DETPayBaseElement {
    */
   private prepareSrc(): void {
     console.log("Preparing iframe src URL");
-    const baseUrl = "https://pay.det.co/iframe";
-    const url = new URL(baseUrl);
+    const url = new URL(this.baseUrl);
     if (this.clientId) {
       url.searchParams.append("client_id", this.clientId);
     }
