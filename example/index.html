@@ -35,9 +35,11 @@
         </div>
         <div>
             <button id="iframeBtn">IFrame</button>
-            <button id="iframeFnBtn">IFrame Fn</button>
+            <button id="iframeFnBtn">IFrame Fn (IIFE)</button>
+            <button id="iframeFnBtn2">IFrame Fn (ES)</button>
             <button id="redirectBtn">Redirect</button>
-            <button id="redirectFnBtn">Redirect Fn</button>
+            <button id="redirectFnBtn">Redirect Fn (IIFE)</button>
+            <button id="redirectFnBtn2">Redirect Fn (ES)</button>
         </div>
          
     </div>
@@ -49,11 +51,17 @@
              document.getElementById("iframeFnBtn").onclick = function() {
                 window.location.href = "iframe-with-fn.html"; 
             };
+              document.getElementById("iframeFnBtn2").onclick = function() {
+                window.location.href = "iframe-with-fn2.html"; 
+            };
              document.getElementById("redirectBtn").onclick = function() {
                 window.location.href = "redirect.html"; 
             };
              document.getElementById("redirectFnBtn").onclick = function() {
                 window.location.href = "redirect-with-fn.html"; 
+            };
+              document.getElementById("redirectFnBtn2").onclick = function() {
+                window.location.href = "redirect-with-fn2.html"; 
             };
         </script>
 </body>

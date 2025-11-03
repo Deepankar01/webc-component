@@ -17,18 +17,24 @@
             align-items: center;
         }
     </style>
-    <script src="./dist/index.iife.js"></script>
 </head>
 <body>
     <div class="wrapper"></div>
-    <script>
-     const el = DETPayComponents.mountDETPayIFrame({
+   <script type="module">
+    // If index.js defines the custom element on import, this line loads/defines it:
+    import './dist/index.js';
+
+    // Import your helper function from the same module:
+    import { mountDETPayRedirect } from './dist/index.js';
+
+    const el = mountDETPayRedirect({
         'client-id': 'a964035c-a007-4c70-af5e-768857810602',
         'redirect-uri': 'https://google.com',
         'data-context': JSON.stringify({ exampleKey: 'exampleValue' }),
         'invoice-id': 'inv_1234567890'
-      });
-      document.getElementsByClassName('wrapper')[0].appendChild(el);
-    </script>
+    });
+
+    document.querySelector('.wrapper').appendChild(el);
+</script>
 </body>
 </html>

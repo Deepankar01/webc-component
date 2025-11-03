@@ -22,12 +22,13 @@
 <body>
     <!-- Attributes can be added to element in html attributes -->
      <div class="wrapper">
-        <det-pay-iframe client-id="" redirect-uri="" data-context=""/>
+        <det-pay-iframe client-id="" redirect-uri="" data-context="" invoice-id=""/>
      </div>
     
     <script>
         // or Attributes can be updated using the setAtrribute method in JavaScript
         const detPayElement = document.querySelector('det-pay-iframe');
+        detPayElement.setAttribute('invoice-id', 'inv_1234567890');
         detPayElement.setAttribute('client-id', 'a964035c-a007-4c70-af5e-768857810602');
         detPayElement.setAttribute('redirect-uri', 'https://google.com');
         detPayElement.setAttribute('data-context', JSON.stringify({ exampleKey: 'exampleValue' })); 
