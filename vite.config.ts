@@ -11,13 +11,16 @@ export default defineConfig({
     lib: {
       entry: path.resolve(__dirname, "src/index.ts"),
       name: "DETPayComponents", // global name if you build UMD later
-      formats: ["es"], // ES module is best for web components
-      fileName: () => "index.js",
+      formats: ["es", "iife"], // ES module is best for web components
+      fileName: (format) =>
+        format === 'es' ? 'index.js' : 'index.iife.js',
+      
     },
     rollupOptions: {
       // externalize deps if you have any (usually none for pure web components)
       external: [],
     },
+    // target: 'es2019',
     emptyOutDir: true,
     outDir: "dist",
     copyPublicDir: false,

@@ -1,5 +1,5 @@
-import { DETPayBaseElement } from "./lib/DETPayBaseElement";
-import {errorTemplate, loaderTemplate} from "./lib/templates"
+import { DETPayBaseElement } from "../lib/DETPayBaseElement";
+import {errorTemplate, loaderTemplate} from "../lib/templates"
 
 const iFrameTemplate = document.createElement("template");
 iFrameTemplate.innerHTML = `
@@ -238,4 +238,10 @@ export class DETPayIFrame extends DETPayBaseElement {
   }
 }
 
-customElements.define("det-pay-iframe", DETPayIFrame);
+
+
+
+// define once, avoid double-registration in dev/HMR
+if (!customElements.get('det-pay-iframe')) {
+  customElements.define("det-pay-iframe", DETPayIFrame);
+}

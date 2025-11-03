@@ -74,4 +74,57 @@ export abstract class DETPayBaseElement extends HTMLElement {
       extraParams,
     };
   }
+
+  protected fetchCredentialsAndEmitEvents({
+    onLoad,
+    onSuccess,
+    source,
+  }: {
+    onSuccess: () => void;
+    source: ComponentEventSource;
+    onLoad: () => void;
+  }) {
+    if (this.clientId && !this.dataConfiguration) {
+      // initialize loader configuration
+      onLoad();
+      this.log("config_loading event emitted");
+      this.emit(source, {
+        message: "Fetching client details",
+        event: "det_pay:config_loading",
+        origin: "",
+      });
+      this.getClientDetails()
+        .then(() => {
+          // initialize iframe only after fetching configuration
+          onSuccess();
+          if (this.dataConfiguration) {
+            this.log("config_success event emitted");
+            this.emit(source, {
+              message: "Client details fetched",
+              event: "det_pay:config_success",
+              data: this.dataConfiguration,
+              origin: "",
+            });
+          } else {
+            this.log(
+              "config_error event emitted due to missing dataConfiguration"
+            );
+            this.emit(source, {
+              message: "Failed to fetch client details",
+              event: "det_pay:config_error",
+              origin: "",
+            });
+          }
+        })
+        .catch((error) => {
+          this.log("config_error event emitted due to error");
+          this.emit(source, {
+            message: "Error fetching client details",
+            event: "det_pay:config_error",
+            data: error,
+            origin: "",
+          });
+        });
+    }
+  }
 }

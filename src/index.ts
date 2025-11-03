@@ -1,2 +1,3 @@
 /// <reference path="./types.d.ts" />
-export { DETPayIFrame } from "./DETPayIFrame";
+export * from "./iframe";
+export * from "./redirect";
