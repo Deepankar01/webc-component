@@ -12,6 +12,7 @@ export abstract class DETPayBaseElement extends HTMLElement {
   protected dataContext: string | undefined;
   protected dataConfiguration: ClientConfiguration | undefined;
   protected debugEnabled = false;
+  protected invoiceId?: string | undefined;
   public nonce?: string = undefined;
 
   /** Simple logger respecting debug flag */
@@ -34,6 +35,7 @@ export abstract class DETPayBaseElement extends HTMLElement {
   /** Read common attributes from the element */
   protected readCommonAttributes() {
     this.log("Reading common attributes");
+    this.invoiceId = this.getAttribute("invoice-id") || undefined;
     this.clientId = this.getAttribute("client-id") || undefined;
     this.redirectUri = this.getAttribute("redirect-uri") || undefined;
     this.dataContext = this.getAttribute("data-context") || undefined;
