@@ -125,8 +125,13 @@ export class DETPayRedirect extends DETPayBaseElement {
 
   // Display an error message in the component
   private errorComponent(message: string) {
-    errorTemplate.querySelector(".error")!.textContent = message;
-    this.shadowRootElement.innerHTML = errorTemplate.innerHTML;
+    const fragment = errorTemplate.content.cloneNode(true) as DocumentFragment;
+    const errorElement = fragment.querySelector<HTMLElement>(".error");
+    if (errorElement) {
+      errorElement.textContent = message;
+    }
+    this.shadowRootElement.innerHTML = "";
+    this.shadowRootElement.appendChild(fragment);
   }
 
   // Initialize loader component
