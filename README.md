@@ -18,28 +18,90 @@ npm install ./dist
 
 ## Usage
 
-Import the package once in your application to register the element globally, then add `<det-pay-iframe>` to your markup.
+Import the package once in your application to register the elements globally, then add `<det-pay-iframe>` or `<det-pay-redirect>` to your markup.
 
 ```ts
 import "webc-component";
 
 // Declarative usage in HTML
-// <det-pay-iframe client-id="..." redirect-uri="..." data-context="..."></det-pay-iframe>
+// <det-pay-iframe client-id="..." redirect-uri="..." data-context="..." invoice-id="..."></det-pay-iframe>
+// <det-pay-redirect client-id="..." redirect-uri="..." invoice-id="..." auto-submit></det-pay-redirect>
 
 // Imperative usage in JavaScript
 const detPay = document.createElement("det-pay-iframe");
 detPay.setAttribute("client-id", "YOUR_CLIENT_ID");
 detPay.setAttribute("redirect-uri", "https://example.com/return");
 detPay.setAttribute("data-context", JSON.stringify({ cartId: "abc" }));
+detPay.setAttribute("invoice-id", "INV-12345");
 
 detPay.addEventListener("detPay:det_pay:result", (event) => {
   console.log("Checkout result", event.detail);
 });
 
 document.body.appendChild(detPay);
+
+// Functional helper for the redirect component
+import { mountDETPayRedirect } from "webc-component/redirect";
+
+const redirectEl = mountDETPayRedirect({
+  "client-id": "YOUR_CLIENT_ID",
+  "redirect-uri": "https://example.com/return",
+  "invoice-id": "INV-12345",
+  "auto-submit": true,
+});
+
+document.body.appendChild(redirectEl);
 ```
 
-Refer to [`docs/DETPayIFrame.md`](docs/DETPayIFrame.md) for a full API and event reference.
+Refer to [`docs/DETPayIFrame.md`](docs/DETPayIFrame.md) for a full iframe API and event reference, and to [`docs/DETPayRedirect.md`](docs/DETPayRedirect.md) for redirect usage details.
+
+### Configuration at a glance
+
+The iframe exposes a handful of attributes that control how it bootstraps the DETPay checkout flow. All attributes are reactive,
+so updating them after insertion reconfigures the iframe.
+
+| Attribute | Purpose |
+| --- | --- |
+| `client-id` | Fetches client configuration and validates redirect URIs / postMessage origins. |
+| `redirect-uri` | Optional URL validated against the client configuration. |
+| `invoice-id` | Optional invoice identifier to resume or prefill a specific DETPay invoice. |
+| `data-context` | Arbitrary JSON string passed through to the checkout experience. |
+| `debug` | When truthy enables verbose logging via the browser console. |
+| `base-src` | Optional explicit iframe origin used when posting messages with `postToChild`. |
+
+### Redirect configuration at a glance
+
+`<det-pay-redirect>` shares the core attributes above—`invoice-id` included so existing invoices can be resumed—and also supports a few redirect-specific options:
+
+| Attribute | Purpose |
+| --- | --- |
+| `auto-submit` | Submits automatically when the redirect URL is ready (defaults to `true`). |
+| `method` | Overrides the form submission method (`GET` by default). |
+| `target` | Sets the browsing context target for the redirect (`_self` by default). |
+
+Additional iframe specific attributes (`sandbox`, `allow`, `referrerpolicy`, `title`, `loading`) fall back to secure defaults
+but can be overridden directly on the element when an integration requires different behaviour.
+
+### Lifecycle events and messaging
+
+The component emits lifecycle events prefixed with `detPay:` that bubble through the DOM. These can be observed with
+`addEventListener` to drive custom UI states (e.g. loading spinners or error banners).
+
+```ts
+detPay.addEventListener("detPay:iframe", (event) => {
+  switch (event.detail.event) {
+    case "det_pay:config_loading":
+      // show a loading indicator
+      break;
+    case "det_pay:config_error":
+      // surface an error message to the user
+      break;
+  }
+});
+```
+
+To send custom messages into the iframe, call `detPay.postToChild(message)`. The component uses the `base-src` attribute (or the
+configured client origin) to scope the postMessage target and prevent broadcasting to the entire web.
 
 ## Building the package
 

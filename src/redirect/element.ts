@@ -42,6 +42,7 @@ export class DETPayRedirect extends DETPayBaseElement {
     return [
       "client-id",
       "redirect-uri",
+      "invoice-id",
       "data-context",
       "debug",
       "auto-submit",
@@ -75,6 +76,9 @@ export class DETPayRedirect extends DETPayBaseElement {
     }
     if (this.dataContext && this.dataConfiguration?.dataKey) {
       url.searchParams.append(this.dataConfiguration.dataKey, this.dataContext);
+    }
+    if (this.invoiceId) {
+      url.searchParams.append("invoice_id", this.invoiceId);
     }
     //adds src to iframe
     return url.toString();
