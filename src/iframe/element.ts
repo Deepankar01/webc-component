@@ -1,5 +1,5 @@
 import { DETPayBaseElement } from "../lib/DETPayBaseElement";
-import {errorTemplate, loaderTemplate} from "../lib/templates"
+import { errorTemplate, loaderTemplate } from "../lib/templates";
 
 const iFrameTemplate = document.createElement("template");
 iFrameTemplate.innerHTML = `
@@ -89,9 +89,17 @@ export class DETPayIFrame extends DETPayBaseElement {
    * PARENT TO CHILD MESSAGE BRIDGE
    */
   postToChild(message: DETPayMessage) {
-    if (!this.iframe.contentWindow) return;
-    //TODO: validate origin properly
-    const targetOrigin = new URL(this.getAttribute("base-src") || "").origin;
+    if (!this.iframe?.contentWindow) return;
+    const baseSrc = this.getAttribute("base-src") || this.iframe.src || this.baseUrl;
+
+    let targetOrigin: string;
+    try {
+      targetOrigin = new URL(baseSrc, window.location.href).origin;
+    } catch (error) {
+      this.log("Skipping postMessage due to invalid base-src", error);
+      return;
+    }
+
     if (!targetOrigin) return;
     this.iframe.contentWindow.postMessage(message, targetOrigin);
   }
@@ -123,7 +131,7 @@ export class DETPayIFrame extends DETPayBaseElement {
     this.iframe = this.shadowRootElement!.querySelector("iframe")!;
     /// Load event listener
     this.iframe.addEventListener("load", () => {
-      console.log("Iframe content has loaded!");
+      this.log("Iframe content has loaded!");
       this.emit("iframe", {
         message: "Iframe loaded",
         event: "det_pay:load",
@@ -132,7 +140,7 @@ export class DETPayIFrame extends DETPayBaseElement {
     });
 
     this.iframe.addEventListener("error", (e) => {
-      console.log("Iframe content has error!");
+      this.log("Iframe content has error!", e);
       this.emit("iframe", {
         message: "Iframe error",
         event: "det_pay:error",
@@ -166,7 +174,7 @@ export class DETPayIFrame extends DETPayBaseElement {
    * @returns prepared src URL
    */
   private prepareSrc(): void {
-    console.log("Preparing iframe src URL");
+    this.log("Preparing iframe src URL");
     const url = new URL(this.baseUrl);
     if (this.clientId) {
       url.searchParams.append("client_id", this.clientId);
@@ -175,7 +183,8 @@ export class DETPayIFrame extends DETPayBaseElement {
       if (this.dataConfiguration.redirectUrls.includes(this.redirectUri)) {
         url.searchParams.append("redirect_uri", this.redirectUri);
       } else {
-        this.errorComponent("Redirect URI mismatch.");// return empty URL if redirect URI is invalid
+        this.errorComponent("Redirect URI mismatch.");
+        return; // return empty URL if redirect URI is invalid
       }
     }
     if (this.dataContext && this.dataConfiguration?.dataKey) {
@@ -226,15 +235,22 @@ export class DETPayIFrame extends DETPayBaseElement {
   }
 
   private errorComponent(message: string) {
-    errorTemplate.querySelector(".error")!.textContent = message;
-    this.shadowRootElement.innerHTML = errorTemplate.innerHTML;
+    const fragment = errorTemplate.content.cloneNode(true) as DocumentFragment;
+    const errorNode = fragment.querySelector<HTMLElement>(".error");
+    if (errorNode) {
+      errorNode.textContent = message;
+    }
+    this.shadowRootElement.innerHTML = "";
+    this.shadowRootElement.appendChild(fragment);
   }
 
   /**
    * Initialize loader component
    */
   private loaderComponent() {
-    this.shadowRootElement.innerHTML = loaderTemplate.innerHTML;
+    const fragment = loaderTemplate.content.cloneNode(true) as DocumentFragment;
+    this.shadowRootElement.innerHTML = "";
+    this.shadowRootElement.appendChild(fragment);
   }
 }
 
