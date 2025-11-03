@@ -5,6 +5,8 @@
 
 Once registered, the component is available globally via `customElements.define("det-pay-iframe", DETPayIFrame);`. Importing the package (for example `import "webc-component";`) is enough to register the element.
 
+While client configuration is loading the element renders a lightweight loader template defined in `src/lib/templates.ts`. If a configuration request fails the element swaps to an inline error view so that integrators receive immediate feedback even without listening to events.
+
 ## Component lifecycle
 - **Construction** – A shadow DOM is created with a wrapper `<iframe>`. Load and error listeners are added to emit lifecycle events.
 - **`connectedCallback`** – Runs when the element is attached to the DOM. This reads the attributes, configures the iframe, fetches client configuration (if a `client-id` is provided), prepares the iframe `src`, and sets up the window message bridge.
@@ -17,8 +19,10 @@ The component reacts to changes in the following attributes:
 | --- | --- |
 | `client-id` | Client identifier used to fetch configuration data from the API. |
 | `redirect-uri` | Optional redirect URL validated against the client configuration. |
+| `invoice-id` | Optional invoice identifier used to resume or prefill an existing DETPay invoice. |
 | `data-context` | Optional contextual data passed to the iframe. |
 | `debug` | Enables debug logging when set to a truthy value (e.g. `debug="true"`). |
+| `base-src` | Optional explicit origin used to scope `postToChild` messages. |
 
 Changing these attributes after insertion re-runs the setup logic to keep the iframe in sync.
 
@@ -34,14 +38,16 @@ The iframe receives additional optional attributes when present on the custom el
 | `loading` | `eager` | Loading strategy for the iframe. |
 
 ## Client configuration fetching
-If a `client-id` attribute is provided, the component attempts to fetch client details from `DETPayBaseElement.APIUrl`. On success, the response is stored in `dataConfiguration` and a nonce is cached for future calls. On failure, a `detPay:iframe` event with the `det_pay:config_error` message is emitted.
+If a `client-id` attribute is provided, the component attempts to fetch client details from `DETPayBaseElement.APIUrl`. On success, the response is stored in `dataConfiguration` and a nonce is cached for future calls. On failure, a `detPay:iframe` event with the `det_pay:config_error` message is emitted and the inline error template is displayed in place of the iframe.
 
 The configuration is used to validate redirect URLs, append context keys, and allow origins for postMessage communication.
+
+When an `invoice-id` attribute is present the iframe URL includes it as `invoice_id`, allowing DETPay to resume an in-progress checkout session.
 
 ## Messaging API
 The component exposes two major messaging surfaces:
 
-1. **Parent to child (`postToChild`)** – Call `element.postToChild(message)` to send a structured `DETPayMessage` to the iframe. The target origin is derived from the `base-src` attribute to prevent broadcasting.
+1. **Parent to child (`postToChild`)** – Call `element.postToChild(message)` to send a structured `DETPayMessage` to the iframe. The target origin is derived from the `base-src` attribute or the configuration-provided allowed origin to prevent broadcasting.
 2. **Child to parent** – The component listens to `window` `message` events. Messages originating from the iframe window and an allowed origin are converted to bubbled `CustomEvent`s with the naming convention `detPay:${msg.type}`.
 
 The following events are emitted from the element:
@@ -62,9 +68,17 @@ const detPay = document.createElement("det-pay-iframe");
 detPay.setAttribute("client-id", "YOUR_CLIENT_ID");
 detPay.setAttribute("redirect-uri", "https://example.com/return");
 detPay.setAttribute("data-context", JSON.stringify({ cartId: "abc" }));
+detPay.setAttribute("base-src", "https://pay.det.co");
+detPay.setAttribute("invoice-id", "INV-12345");
 
 detPay.addEventListener("detPay:det_pay:result", (event) => {
   console.log("Checkout result", event.detail);
+});
+
+detPay.addEventListener("detPay:iframe", (event) => {
+  if (event.detail.event === "det_pay:config_error") {
+    console.error("Could not load DETPay", event.detail);
+  }
 });
 
 document.body.appendChild(detPay);
@@ -94,3 +108,9 @@ The example shows both declarative attribute usage and imperative updates via Ja
 
 ## Type definitions
 TypeScript consumers can rely on the generated `dist/index.d.ts` which re-exports the `DETPayIFrame` class and the custom element typings included in [`src/types.d.ts`](../src/types.d.ts). This provides strong typing for events and helper methods.
+
+## Troubleshooting
+
+- Ensure `base-src` matches the origin hosting the DETPay iframe; otherwise `postToChild` calls are ignored to prevent cross-origin leakage.
+- A `det_pay:config_error` event indicates the client configuration could not be fetched. Check network requests to `DETPayBaseElement.APIUrl` and confirm the `client-id` is valid.
+- If `det_pay:height` events are emitted but the element does not resize, verify that no external CSS overrides the component `min-height` style applied when messages are received.

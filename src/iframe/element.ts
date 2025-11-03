@@ -106,7 +106,13 @@ export class DETPayIFrame extends DETPayBaseElement {
 
   //Observed attributes for the element
   static get observedAttributes() {
-    return ["client-id", "redirect-uri", "data-context", "debug"];
+    return [
+      "client-id",
+      "redirect-uri",
+      "invoice-id",
+      "data-context",
+      "debug",
+    ];
   }
 
   /**
@@ -186,6 +192,9 @@ export class DETPayIFrame extends DETPayBaseElement {
         this.errorComponent("Redirect URI mismatch.");
         return; // return empty URL if redirect URI is invalid
       }
+    }
+    if (this.invoiceId) {
+      url.searchParams.append("invoice_id", this.invoiceId);
     }
     if (this.dataContext && this.dataConfiguration?.dataKey) {
       url.searchParams.append(this.dataConfiguration.dataKey, this.dataContext);
