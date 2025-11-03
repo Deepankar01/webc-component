@@ -2,7 +2,7 @@
  * Templates for error and loader components
  */
 
-export const errorTemplate = document.createElement("error-template");
+export const errorTemplate = document.createElement("template");
 errorTemplate.innerHTML = `
   <style>
     .error  {
@@ -17,7 +17,7 @@ errorTemplate.innerHTML = `
   </div>
 `;
 
-export const loaderTemplate = document.createElement("loader-template");
+export const loaderTemplate = document.createElement("template");
 loaderTemplate.innerHTML = `
   <style>
     .loader {
